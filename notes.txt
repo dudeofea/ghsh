@@ -1,0 +1,3 @@
+#### Resources: ####
+Natural Language Processing
+http://www.nltk.org/book/ch08.html
