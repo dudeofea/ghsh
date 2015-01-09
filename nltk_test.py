@@ -25,4 +25,4 @@ grammar = """
 parser = CFGChartParser()
 for tree in parser.parse(tagged):
 	print(tree)
-	#tree.draw()
+	tree.draw()
