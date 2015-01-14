@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import nltk
 from CFGChartParser import CFGChartParser
-sentence = "I shot an elephant in my pants"
+sentence = "I shot an elephant in my pyjamas"
 #print sentence
 # tag sentence
 tagged = nltk.pos_tag(sentence.split())

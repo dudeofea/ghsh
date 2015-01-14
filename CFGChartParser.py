@@ -49,7 +49,7 @@ class CFGChartParser(object):
 			labels = [u.label() for u in unmerged]
 			m = self.run_pass(labels)
 		return unmerged
-
+	
 	def run_pass(self, labels):
 		r = []
 		prod = self.grammar.productions()
@@ -63,7 +63,7 @@ class CFGChartParser(object):
 			if len(matches) > 0:
 				break
 		return r
-
+	#find a match with right hand side requesites within labels
 	def find_rhs_match(self, rhs, labels):
 		ans = []
 		rhs_i = 0
