@@ -27,28 +27,6 @@ class CFGChartParser(object):
 					if word[1] == r:
 						unmerged.append(Tree(p.lhs(), [word[0]]))
 		#match the rest
-		#TODO: find a way to print every combination of single root trees
-		# labels = [u.label() for u in unmerged]
-		# m = self.run_pass(labels)
-		# while len(m) > 0:
-		# 	# perform merges
-		# 	offset = 0
-		# 	for match in m:
-		# 		p = self.grammar.productions()[match[0]]
-		# 		rhs = p.rhs()
-		# 		i = match[1] - offset
-		# 		offset += len(rhs) - 1
-		# 		u = unmerged[i:i+len(rhs)]
-		# 		if len(rhs) == 1:
-		# 			t = Tree(p.lhs(), [u[0][0]])
-		# 		else:
-		# 			t = Tree(p.lhs(), u)
-		# 		del unmerged[i:i+len(rhs)]
-		# 		unmerged.insert(i, t)
-		# 		a = [str(u) for u in unmerged]
-		# 	print a
-		# 	labels = [u.label() for u in unmerged]
-		# 	m = self.run_pass(labels)
 		unmerged = self.find_all_trees(unmerged)
 		#remove all sentences that aren't sentences
 		unmerged = [u for u in unmerged if str(u.label()) == 'S' and self.leaf_count(u) == len(words)]
@@ -69,14 +47,15 @@ class CFGChartParser(object):
 		for merge in merges:
 			tmp_tree = copy(tree)
 			tmp_tree = self.perform_merge(tmp_tree, merge)
-			print "Descending...", [str(t) for t in tmp_tree]
+			#print "Descending...", [str(t) for t in tmp_tree]
 			tmp_tree = self.find_all_trees(tmp_tree)
-			if len(tmp_tree) > 0:
-				trees.extend(tmp_tree)
+			for t in tmp_tree:
+				if t not in trees:
+					trees.append(t)
 			#print "Ascending..."
 		if len(trees) == 0:
 			trees = tree #we're done
-		print "Returning:", [str(t) for t in trees]
+		#print "Returning:", [str(t) for t in trees]
 		return trees
 
 	def perform_merge(self, tree, merge):
@@ -101,7 +80,7 @@ class CFGChartParser(object):
 			rhs = p.rhs()
 			matches = self.find_rhs_match(rhs, labels)
 			for match in matches:
-				print "Match:", p.lhs(), "->", p.rhs(), match
+				#print "Match:", p.lhs(), "->", p.rhs(), match
 				r.append([i, match])
 		return r
 	#find a match with right hand side requesites within labels
