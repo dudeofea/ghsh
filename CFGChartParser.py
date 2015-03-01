@@ -13,7 +13,7 @@ class CFGChartParser(object):
 			NP -> Det N | Det N PP | N
 			Det -> 'DT' | 'PRP$'
 			N -> 'NN' | 'PRP' | 'NNS'
-			V -> 'VBD'
+			V -> 'VBD' | 'VBP'
 			P -> 'IN'
 		""")
 	
@@ -47,19 +47,15 @@ class CFGChartParser(object):
 		for merge in merges:
 			tmp_tree = copy(tree)
 			tmp_tree = self.perform_merge(tmp_tree, merge)
-			#print "Descending...", [str(t) for t in tmp_tree]
 			tmp_tree = self.find_all_trees(tmp_tree)
 			for t in tmp_tree:
 				if t not in trees:
 					trees.append(t)
-			#print "Ascending..."
 		if len(trees) == 0:
 			trees = tree #we're done
-		#print "Returning:", [str(t) for t in trees]
 		return trees
 
 	def perform_merge(self, tree, merge):
-		#print "Merging:", [str(t) for t in tree], merge
 		p = self.grammar.productions()[merge[0]]
 		rhs = p.rhs()
 		i = merge[1]
@@ -80,7 +76,6 @@ class CFGChartParser(object):
 			rhs = p.rhs()
 			matches = self.find_rhs_match(rhs, labels)
 			for match in matches:
-				#print "Match:", p.lhs(), "->", p.rhs(), match
 				r.append([i, match])
 		return r
 	#find a match with right hand side requesites within labels
