@@ -7,7 +7,7 @@ class KNet(object):
 	def add_node(self, node):
 		self.nodes.append(node)
 		return len(self.nodes)-1
-	def get_node(self, index):
+	def get(self, index):
 		return self.nodes[index]
 	def add_link(self, node1_i, node2_i, link):
 		link.node2 = node2_i
@@ -16,11 +16,16 @@ class KNet(object):
 		link_c.node2 = -1
 		link_c.node1 = node1_i
 		self.nodes[node2_i].links.append(link_c)
-	def __str__(self):
-		s = '[\n  ' + '\n  '.join(['['+str(x)+'] '+str(self.nodes[x]) for x in xrange(0, len(self.nodes))]) + '\n]'
-		return s
+	#find node index by name
+	def find(self, name):
+		for x in xrange(0, len(self.nodes)):
+			if self.nodes[x].name == name:
+				return x
+		return -1
 	#find if node1 is node2
 	def find_is(self, n1, n2):
+		if n1 < 0 or n2 < 0:
+			return False
 		#blank conditions first
 		for n in self.nodes:
 			n.cond = False
@@ -39,6 +44,9 @@ class KNet(object):
 				return self._find_is(self.nodes[l.node2], n2)
 		#nothing :(
 		return False	#done for this level
+	def __str__(self):
+		s = '[\n  ' + '\n  '.join(['['+str(x)+'] '+str(self.nodes[x]) for x in xrange(0, len(self.nodes))]) + '\n]'
+		return s
 
 class KNode(object):
 	"""Semantic node, holds relations to other nodes"""
