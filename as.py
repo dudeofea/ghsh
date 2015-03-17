@@ -2,16 +2,19 @@
 from knowledge_net import *
 
 k = KNet()
-k.add_node(KNode('animal'))
-k.add_node(KNode('dog'))
-k.add_node(KNode('fur'))
-k.add_node(KNode('vertebrates'))
+
 #dogs are animals with fur
-k.add_link(0, 1, WithKLink(2))
+tmp = k.add_link([k.r('animal'), k.r('fur')], k.r('with'))
+k.add_link([k.r('dog'), tmp], k.r('is'))
 
 #animals are vertebrates
-k.add_link(3, 0, AreKLink())
+k.add_link([k.r('animal'), k.r('vertebrate')], k.r('is'))
 
-#print k
+#he likes the girl who wore the dress
+tmp = k.add_link([k.r('girl'), k.r('dress')], k.r('wore'))
+tmp.set_sub('girl')
+k.add_link([k.r('he'), tmp], k.r('likes'))
+
+print k
 #are dogs vertebrates?
-print k.find_is(k.find('dog'), k.find('vertebrates'))
+#print k.find_is(k.find('dog'), k.find('vertebrates'))

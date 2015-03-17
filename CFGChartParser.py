@@ -1,5 +1,5 @@
 from nltk.tree import Tree
-from nltk import CFG
+from nltk import CFG, help
 from copy import copy
 
 class CFGChartParser(object):
@@ -9,12 +9,13 @@ class CFGChartParser(object):
 		self.grammar = CFG.fromstring("""
 			S -> NP VP
 			PP -> P NP
-			VP -> V NP | VP PP
-			NP -> Det N | Det N PP | N
+			VP -> V NP | VP PP | V
+			NP -> Det N | Det Adj N | Det N PP | NP S | N | 'WP'
 			Det -> 'DT' | 'PRP$'
 			N -> 'NN' | 'PRP' | 'NNS'
-			V -> 'VBD' | 'VBP'
+			V -> 'VBD' | 'VBP' | 'VBZ' | 'RB' 
 			P -> 'IN'
+			Adj -> 'JJ'
 		""")
 	
 	def parse(self, words):
@@ -22,10 +23,16 @@ class CFGChartParser(object):
 		unmerged = []
 		#match the words themselves
 		for word in words:
+			matched = False
 			for p in self.grammar.productions():
 				for r in p.rhs():
 					if word[1] == r:
+						matched = True
 						unmerged.append(Tree(p.lhs(), [word[0]]))
+			#if you can't match the word
+			if not matched:
+				print "Couldn't find tag for", "'"+word[0]+"'", "("+word[1]+")"
+				print help.upenn_tagset(word[1])
 		#match the rest
 		unmerged = self.find_all_trees(unmerged)
 		#remove all sentences that aren't sentences

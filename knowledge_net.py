@@ -7,43 +7,42 @@ class KNet(object):
 	def add_node(self, node):
 		self.nodes.append(node)
 		return len(self.nodes)-1
-	def get(self, index):
-		return self.nodes[index]
-	def add_link(self, node1_i, node2_i, link):
-		link.node2 = node2_i
-		self.nodes[node1_i].links.append(link)
-		link_c = copy.deepcopy(link)
-		link_c.node2 = -1
-		link_c.node1 = node1_i
-		self.nodes[node2_i].links.append(link_c)
+	def get(self, port):
+		#return the thing
+		if port.sel_sub < 0:
+			return self.nodes[port.index]
+		#return a subthing
+		return self.nodes[port.sel_sub]
+	#creates a new link, all node_l's must exist
+	def add_link(self, node_l, link_n):
+		#make a new instance of a link
+		link = copy.deepcopy(self.get(link_n))
+		link.links = node_l
+		link.ref = link_n
+		new_link_i = self.add_node(link)
+		# set links in all referred indexes
+		length = len(self.nodes)
+		subs = []
+		for i in node_l:
+			if i.index < length and i.index > -1:
+				self.nodes[i.index].linked_to.append(new_link_i)
+				subs.append({'name': self.nodes[i.index].name, 'index': i.index})
+		port = KPort(new_link_i, subs)
+		return port
 	#find node index by name
 	def find(self, name):
 		for x in xrange(0, len(self.nodes)):
 			if self.nodes[x].name == name:
 				return x
 		return -1
-	#find if node1 is node2
-	def find_is(self, n1, n2):
-		if n1 < 0 or n2 < 0:
-			return False
-		#blank conditions first
-		for n in self.nodes:
-			n.cond = False
-		#we is us
-		us = self.nodes[n2]
-		us.cond = True
-		return self._find_is(us, n1)
-	#recursive function to find is
-	def _find_is(self, us, n2):
-		#look for all subset type links
-		for l in us.links:
-			if l.node2 == n2:
-				return True		#done
-			if l.node2 >= 0 and issubclass(type(l), AreKLink):
-				#further links
-				return self._find_is(self.nodes[l.node2], n2)
-		#nothing :(
-		return False	#done for this level
+	#either returns the index or creates a
+	#new node and returns it's index
+	def r(self, name):
+		i = self.find(name)
+		if i < 0:
+			i = self.add_node(KNode(name))
+		port = KPort(i, [])
+		return port
 	def __str__(self):
 		s = '[\n  ' + '\n  '.join(['['+str(x)+'] '+str(self.nodes[x]) for x in xrange(0, len(self.nodes))]) + '\n]'
 		return s
@@ -52,52 +51,34 @@ class KNode(object):
 	"""Semantic node, holds relations to other nodes"""
 	def __init__(self, name):
 		self.name = name
+		self.linked_to = []
 		self.links = []
 		self.cond = False	#for searching for a condition in many nodes
+		self.ref = -1		#if node is referring to another node
 	def __str__(self):
 		s = 'Name: '+self.name
-		s+= '   Links: '+', '.join([str(x) for x in self.links])
+		if len(self.linked_to) > 0:
+			s+= ' linked to: '+str(self.linked_to)
+		if len(self.links) > 0:
+			s+= ' links: [ '
+			for l in self.links:
+				s+= str(l) + ' '
+		if self.ref > -1:
+			s+= '] referring: '+str(self.ref)
 		return s
 
-class KLink(object):
-	"""A link from one KNode to another"""
-	def __init__(self):
-		self.node1 = -1		#main node
-		self.node2 = -1		#referring node
-
-#something IS something else, somethings can be many other things
-#this is similar to WithKLink minus the 'with'. pure subset
-class AreKLink(KLink):
-	#node1 <-is- node2
+class KPort(object):
+	"""A sort of index describing what something links to"""
+	def __init__(self, index, subs):
+		self.index = index
+		self.subs = subs	#referring to a certain part(s) of this thing
+		self.sel_sub = -1	#default to referring to the thing itself
+	def set_sub(self, name):
+		for i in xrange(0, len(self.subs)):
+			if self.subs[i]['name'] == name:
+				self.sel_sub = i
 	def __str__(self):
-		s = ''
-		if self.node1 < 0:
-			s += 'me'
-		else:
-			s += 'node '+str(self.node1)
-		s += ' <-is- '
-		if self.node2 < 0:
-			s += 'me'
-		else:
-			s += 'node '+str(self.node2)
-		return s
-
-#the link explaining the direct combination
-#of 2 things making another thing. conditional subset
-class WithKLink(AreKLink):
-	#node1 + node_c -> node2
-	def __init__(self, node_c):
-		super(WithKLink, self).__init__()
-		self.node_c = node_c
-	def __str__(self):
-		s = ''
-		if self.node1 < 0:
-			s += 'me'
-		else:
-			s += 'node '+str(self.node1)
-		s += ' w/ node '+str(self.node_c)+' -> '
-		if self.node2 < 0:
-			s += 'me'
-		else:
-			s += 'node '+str(self.node2)
+		s = str(self.index)
+		if self.sel_sub >= 0:
+			s += '('+str(self.sel_sub)+')'
 		return s
