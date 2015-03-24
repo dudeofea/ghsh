@@ -10,12 +10,12 @@ class CFGChartParser(object):
 			S -> NP VP
 			PP -> P NP
 			VP -> V NP | VP PP | V
-			NP -> Det N | Det Adj N | Det N PP | NP S | N | 'WP'
+			NP -> Det N | Det ADJ N | Det N PP | ADJ NP | NP S | N | 'WP'
 			Det -> 'DT' | 'PRP$'
 			N -> 'NN' | 'PRP' | 'NNS'
 			V -> 'VBD' | 'VBP' | 'VBZ' | 'RB' 
 			P -> 'IN'
-			Adj -> 'JJ'
+			ADJ -> 'JJ'
 		""")
 	
 	def parse(self, words):

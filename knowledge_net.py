@@ -1,4 +1,23 @@
-import copy
+import copy, nltk
+from CFGChartParser import CFGChartParser
+
+#find a child with label
+def t_find(tree, labels):
+	for c in tree:
+		if not hasattr(c, 'label'):
+			return None
+		if str(c.label()) in labels:
+			return c
+		c2 = t_find(c, labels)
+		if c2 != None:
+			return c2
+	return None
+#returns true if tree node matches given form
+def t_children_are(tree, child_s):
+	for i in xrange(0, len(tree)):
+		if str(tree[i].label()) != child_s[i]:
+			return False
+	return True
 
 class KNet(object):
 	"""Net of knowledge composed of nodes linked to each other"""
@@ -14,7 +33,9 @@ class KNet(object):
 		#return a subthing
 		return self.nodes[port.sel_sub]
 	#creates a new link, all node_l's must exist
-	def add_link(self, node_l, link_n):
+	def add_link(self, node_l):
+		link_n = node_l[0]
+		del node_l[0]
 		#make a new instance of a link
 		link = copy.deepcopy(self.get(link_n))
 		link.links = node_l
@@ -43,6 +64,52 @@ class KNet(object):
 			i = self.add_node(KNode(name))
 		port = KPort(i, [])
 		return port
+	#parses a sentence and ads it to the KNet
+	def parse(self, sentence):
+		tagged = nltk.pos_tag(sentence.split())
+		parser = CFGChartParser()
+		tree = parser.parse(tagged)[0]
+		tree.draw()
+		#find what is doing what?
+		args = self._parseNode(tree)
+		self.add_link(args)
+	#parses a certain gramatical node of a sentence tree
+	#returns a KPort pointing to what is needed
+	def _parseNode(self, node):
+		ports = []
+		label = str(node.label())
+		if label == 'NP':
+			ports.append(self.r(self.print_tnode(node)))
+			#adj = t_find(node, ['ADJ'])							#find optional adjective
+			#if adj != None:
+			#	ports.insert(0, self.r(self.print_tnode(adj)))
+			return ports
+		if label == 'N':
+			return [self.r(str(node[0]))]
+		if label == 'S':
+			verb_p = node[1]									#get verb phrase
+			verb = t_find(verb_p, ['V'])						#get verb
+			if verb == None:									#if you can't find a verb, use the phrase
+				verb = verb_p
+			ports.append(self.r(self.print_tnode(verb)))
+			ports.extend(self._parseNode(node[0]))				#get noun phrase
+			#get optional noun phrase in verb phrase
+			noun_p = t_find(verb_p, ['NP', 'N'])
+			if noun_p != None:
+				ports.extend(self._parseNode(noun_p))
+			return ports
+		return [self.r(self.print_tnode(node))]
+	#prints out the leaves of a node
+	def print_tnode(self, node):
+		if node == None:
+			return ''
+		if len(node) <= 1:
+			return node[0]
+		s = []
+		for n in node:
+			s.append(self.print_tnode(n))
+		return ' '.join(s)
+		#print len(node[0]), node[0][0]
 	def __str__(self):
 		s = '[\n  ' + '\n  '.join(['['+str(x)+'] '+str(self.nodes[x]) for x in xrange(0, len(self.nodes))]) + '\n]'
 		return s
@@ -51,8 +118,8 @@ class KNode(object):
 	"""Semantic node, holds relations to other nodes"""
 	def __init__(self, name):
 		self.name = name
-		self.linked_to = []
-		self.links = []
+		self.linked_to = []	#used if this node is linked to a linking node in a way
+		self.links = []		#used if this nodes links other nodes together in a way
 		self.cond = False	#for searching for a condition in many nodes
 		self.ref = -1		#if node is referring to another node
 	def __str__(self):
@@ -63,9 +130,23 @@ class KNode(object):
 			s+= ' links: [ '
 			for l in self.links:
 				s+= str(l) + ' '
+			s+= ']'
 		if self.ref > -1:
-			s+= '] referring: '+str(self.ref)
+			s+= ' referring: '+str(self.ref)
 		return s
+	def __eq__(self, other):
+		if self.name != other.name:
+			return False
+		if self.linked_to != other.linked_to:
+			return False
+		if not self.ref == other.ref:
+			return False
+		if len(self.links) != len(other.links):
+			return False
+		for i in xrange(0, len(self.links)):
+			if not self.links[i] == other.links[i]:
+				return False
+		return True
 
 class KPort(object):
 	"""A sort of index describing what something links to"""
@@ -82,3 +163,11 @@ class KPort(object):
 		if self.sel_sub >= 0:
 			s += '('+str(self.sel_sub)+')'
 		return s
+	def __eq__(self, other):
+		if self.index != other.index:
+			return False
+		if self.subs != other.subs:
+			return False
+		if self.sel_sub != other.sel_sub:
+			return False
+		return True
