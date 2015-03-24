@@ -1,3 +1,5 @@
 #### Resources: ####
 Natural Language Processing
-http://www.nltk.org/book/ch08.html
+	http://www.nltk.org/book/ch08.html
+Semantical Graphs and Sentence Trees
+	http://webspace.ship.edu/cgboer/semantics.html
