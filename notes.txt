@@ -3,3 +3,5 @@ Natural Language Processing
 	http://www.nltk.org/book/ch08.html
 Semantical Graphs and Sentence Trees
 	http://webspace.ship.edu/cgboer/semantics.html
+Words list
+	http://www-01.sil.org/linguistics/wordlists/english/wordlist/wordsEn.txt

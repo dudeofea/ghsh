@@ -65,40 +65,60 @@ class KNet(object):
 		port = KPort(i, [])
 		return port
 	#parses a sentence and ads it to the KNet
-	def parse(self, sentence):
-		tagged = nltk.pos_tag(sentence.split())
-		parser = CFGChartParser()
-		tree = parser.parse(tagged)[0]
-		tree.draw()
+	def parse(self, tree):
 		#find what is doing what?
-		args = self._parseNode(tree)
-		self.add_link(args)
+		new_net = KNet()
+		self._parseNode(tree, new_net)
+		print new_net
 	#parses a certain gramatical node of a sentence tree
-	#returns a KPort pointing to what is needed
-	def _parseNode(self, node):
-		ports = []
-		label = str(node.label())
-		if label == 'NP':
-			ports.append(self.r(self.print_tnode(node)))
-			#adj = t_find(node, ['ADJ'])							#find optional adjective
-			#if adj != None:
-			#	ports.insert(0, self.r(self.print_tnode(adj)))
-			return ports
-		if label == 'N':
-			return [self.r(str(node[0]))]
-		if label == 'S':
-			verb_p = node[1]									#get verb phrase
-			verb = t_find(verb_p, ['V'])						#get verb
-			if verb == None:									#if you can't find a verb, use the phrase
-				verb = verb_p
-			ports.append(self.r(self.print_tnode(verb)))
-			ports.extend(self._parseNode(node[0]))				#get noun phrase
-			#get optional noun phrase in verb phrase
-			noun_p = t_find(verb_p, ['NP', 'N'])
-			if noun_p != None:
-				ports.extend(self._parseNode(noun_p))
-			return ports
-		return [self.r(self.print_tnode(node))]
+	#returns a KNet representing the sentence
+	def _parseNode(self, node, net, net_i=-1):
+		#get node type
+		ntype = str(node.label())
+		for n in node:
+			if not hasattr(n, 'label'):
+				break
+			ntype += ","+str(n.label())
+		if ntype == 'S,NP,VP':		#sentence
+			#parse noun
+			noun = net.add_node(KNode(''))
+			self._parseNode(node[0], net, noun)
+			#parse verb phrase
+			verb = net.add_node(KNode(''))
+			net.nodes[verb].links.append(KPort(noun))
+			self._parseNode(node[1], net, verb)
+		elif ntype == 'VP,VP,PP':	#modified verb phrase
+			#parse verb phrase
+			self._parseNode(node[0], net, net_i)
+			#parse modifier
+			self._parseNode(node[1], net, net_i)
+		elif ntype == 'VP,V,NP':	#simple verb phrase
+			#parse verb
+			self._parseNode(node[0], net, net_i)
+			#parse noun
+			noun = net.add_node(KNode(''))
+			net.nodes[net_i].links.append(KPort(noun))
+			self._parseNode(node[1], net, noun)
+		elif ntype == 'PP,P,NP':	#prepositional phrase
+			#parse preposition
+			prep = net.add_node(KNode(str(node[0][0])))
+			net.nodes[prep].links.append(net_i)
+			#parse noun phrase
+			noun = net.add_node(KNode(''))
+			net.nodes[prep].links.append(noun)
+			self._parseNode(node[1], net, noun)
+		elif ntype == 'NP,DT,N,PP':	#modified noun phrase
+			net.nodes[net_i].name = str(node[0][0]) + ' ' + str(node[1][0])
+			#parse modifier
+			self._parseNode(node[2], net, net_i)
+		elif ntype == 'NP,DT,N':	#noun with determinant
+			net.nodes[net_i].name = str(node[0][0]) + ' ' + str(node[1][0])
+		elif ntype == 'V':			#simple verb
+			net.nodes[net_i].name = node[0]
+		elif ntype == 'NP':			#simple noun
+			net.nodes[net_i].name = node[0]
+		else:
+			print ntype
 	#prints out the leaves of a node
 	def print_tnode(self, node):
 		if node == None:
@@ -150,7 +170,7 @@ class KNode(object):
 
 class KPort(object):
 	"""A sort of index describing what something links to"""
-	def __init__(self, index, subs):
+	def __init__(self, index, subs=[]):
 		self.index = index
 		self.subs = subs	#referring to a certain part(s) of this thing
 		self.sel_sub = -1	#default to referring to the thing itself

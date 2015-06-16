@@ -1,4 +1,4 @@
-import pickle
+import pickle, nltk
 
 #get all combinations of tags
 def combinate_tags(tags):
@@ -11,31 +11,41 @@ def combinate_tags(tags):
 			yield [(tags[0][0], t)]
 
 class brute_tagger(object):
-	def __init__(self, filename=None):
-		self.tag_list = []
-		if file != None:
+	def __init__(self, filename=None, train=False):
+		self.tag_list = ([], [])
+		if filename != None:
 			self.load_tags(filename)
+		self.train = train
 	def tag(self, words):
 		tags = []
 		for i in xrange(0, len(words)):
-			for t in self.tag_list:
-				if words[i] == t[0]:
-					tags.append(t)
-					break
+			try:
+				j = self.tag_list[0].index(words[i])
+			except ValueError:
+				j = -1
+			if j >= 0:
+				tags.append([words[i]]+self.tag_list[1][j])
+			elif self.train:
+				print "added new word:", words[i]
+				tag = [nltk.pos_tag([words[i]])[0][1]]
+				self.add_tag(words[i], tag)
+				tags.append([words[i]] + tag)
+			else:
+				tags.append([words[i]])
 		for t in combinate_tags(tags):
 			yield t
 	def add_tag(self, word, tags):
 		#see if it already exists
-		index = -1
-		for i in xrange(0,len(self.tag_list)):
-			if word == self.tag_list[i][0]:
-				index = i
-				break
+		try:
+			index = self.tag_list[0].index(word)
+		except ValueError:
+			index = -1
 		if index < 0:	#new
-			self.tag_list.append([word] + tags)
+			self.tag_list[0].append(word)
+			self.tag_list[1].append(tags)
 		else:			#old
-			ext = list(set(tags) - set(self.tag_list[index][1:]))
-			self.tag_list[index].extend(ext)
+			ext = list(set(tags) - set(self.tag_list[1][index][1:]))
+			self.tag_list[1][index].extend(ext)
 	def save_tags(self, filename):
 		with open(filename, 'wb') as myfile:
 			pickle.dump(self.tag_list, myfile, pickle.HIGHEST_PROTOCOL)

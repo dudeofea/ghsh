@@ -10,8 +10,8 @@ class CFGChartParser(object):
 			S -> NP VP
 			PP -> P NP
 			VP -> V NP | VP PP | V
-			NP -> Det N | Det ADJ N | Det N PP | ADJ NP | NP S | N | 'WP'
-			Det -> 'DT' | 'PRP$'
+			NP -> DT N | DT ADJ N | DT N PP | ADJ NP | NP S | N | 'WP'
+			DT -> 'DT' | 'PRP$'
 			N -> 'NN' | 'PRP' | 'NNS'
 			V -> 'VBD' | 'VBP' | 'VBZ' | 'RB' 
 			P -> 'IN'
